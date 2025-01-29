@@ -7,12 +7,14 @@
     "require": {
         "php": "^8.1",
         "backpack/crud": "^6.7",
+        "backpack/medialibrary-uploaders": "^1.2",
         "backpack/permissionmanager": "^7.2",
         "backpack/theme-tabler": "^1.2",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
-        "laravel/tinker": "^2.8"
+        "laravel/tinker": "^2.8",
+        "spatie/laravel-medialibrary": "^10.0.0"
     },
     "require-dev": {
         "backpack/generators": "^4.0",
