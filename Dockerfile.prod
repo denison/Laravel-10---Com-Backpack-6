@@ -1,0 +1,59 @@
+# Base usando uma imagem leve para produção
+FROM php:8.3-fpm-alpine
+
+# Argumentos para o usuário (permitem alterar o UID/GID se necessário)
+ARG user=denison
+ARG uid=1000
+
+# Instalar dependências do sistema e extensões PHP necessárias
+RUN apk --no-cache add \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    bash && \
+    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS && \
+    pecl install redis && \
+    docker-php-ext-enable redis && \
+    docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets && \
+    apk del .build-deps && \
+    rm -rf /var/cache/apk/*
+
+# Instalar Composer a partir da imagem oficial
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Criar usuário para rodar a aplicação
+RUN adduser -D -u $uid $user && \
+    mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user
+
+# Definir diretório de trabalho
+WORKDIR /var/www
+
+# Copiar configuração customizada do PHP
+COPY docker/php/custom.ini /usr/local/etc/php/conf.d/custom.ini
+
+# Copiar primeiro os arquivos de dependência para aproveitar cache
+COPY composer.json composer.lock ./
+
+# Instalar dependências do Composer (produzindo a pasta vendor na imagem)
+RUN composer install --no-dev --optimize-autoloader
+
+# Copiar o restante dos arquivos do projeto
+COPY . .
+
+# Ajustar permissões para pastas críticas (storage, bootstrap/cache)
+RUN chown -R $user:www-data /var/www && \
+    chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# Trocar para o usuário não-root
+USER $user
+
+# Expor a porta que o PHP-FPM usa (padrão 9000)
+EXPOSE 9000
+
+# Comando padrão para rodar a aplicação
+CMD ["php-fpm"]

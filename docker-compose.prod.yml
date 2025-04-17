@@ -1,0 +1,65 @@
+version: "3.7"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www
+    # NÃO mapeamos o volume do código para garantir que a imagem construída seja usada
+    # volumes:  # Comentado para produção
+    #   - ./:/var/www
+    depends_on:
+      - db
+      - redis
+    networks:
+      - laravel
+    environment:
+      - APP_ENV=production
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=laravel
+      - DB_USERNAME=username
+      - DB_PASSWORD=userpass
+      - REDIS_HOST=redis
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      # Aqui mapeamos somente a configuração do Nginx e, se necessário, arquivos públicos
+      - ./docker/nginx/:/etc/nginx/conf.d/
+      # Se desejar mapear o diretório public para facilitar atualizações de assets, pode mapear apenas esse diretório:
+      - ./public:/var/www/public
+    networks:
+      - laravel
+
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-laravel}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-userpass}
+      MYSQL_USER: ${DB_USERNAME:-username}
+    volumes:
+      - ./.docker/mysql/dbdata:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - laravel
+
+  redis:
+    image: redis:latest
+    networks:
+      - laravel
+
+networks:
+  laravel:
+    driver: bridge
