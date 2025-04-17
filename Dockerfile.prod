@@ -36,14 +36,17 @@ WORKDIR /var/www
 # Copiar configuração customizada do PHP
 COPY docker/php/custom.ini /usr/local/etc/php/conf.d/custom.ini
 
-# Copiar primeiro os arquivos de dependência para aproveitar cache
-COPY composer.json composer.lock ./
+# # Copiar primeiro os arquivos de dependência para aproveitar cache
+# COPY composer.json composer.lock ./
 
-# Instalar dependências do Composer (produzindo a pasta vendor na imagem)
-RUN composer install --no-dev --optimize-autoloader
+# # Instalar dependências do Composer (produzindo a pasta vendor na imagem)
+# RUN composer install --no-dev --optimize-autoloader
 
-# Copiar o restante dos arquivos do projeto
-COPY . .
+# # Copiar o restante dos arquivos do projeto
+# COPY . .
+
+COPY . /var/www
+RUN composer install --no-dev --optimize-autoloader --working-dir=/var/www
 
 # Ajustar permissões para pastas críticas (storage, bootstrap/cache)
 RUN chown -R $user:www-data /var/www && \
