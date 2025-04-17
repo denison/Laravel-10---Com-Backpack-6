@@ -34,7 +34,7 @@ services:
       - "80:80"
     volumes:
       # Aqui mapeamos somente a configuração do Nginx e, se necessário, arquivos públicos
-      - ./docker/nginx/:/etc/nginx/conf.d/
+      - ./docker/nginx/laravel.conf:/etc/nginx/conf.d/default.conf
       # Se desejar mapear o diretório public para facilitar atualizações de assets, pode mapear apenas esse diretório:
       - ./public:/var/www/public
     networks:
